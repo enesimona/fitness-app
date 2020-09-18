@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import WorkoutForm from "./WorkoutForm";
-import Workout from "./Workout";
 import firebase from "../firebase";
 
 const WorkoutList = () => {
   var [workouts, setWorkouts] = useState({});
+  var [currentId, setCurrentId] = useState("");
 
   useEffect(() => {
     firebase.child("workouts").on("value", (snapshot) => {
@@ -13,13 +13,30 @@ const WorkoutList = () => {
         setWorkouts({
           ...snapshot.val(),
         });
+      else setWorkouts({});
     });
   }, []); //similar to componentDidMount
 
   const addOrEdit = (obj) => {
-    firebase.child("workouts").push(obj, (err) => {
-      if (err) console.log(err);
-    });
+    if (currentId == "")
+      firebase.child("workouts").push(obj, (err) => {
+        if (err) console.log(err);
+        else setCurrentId("");
+      });
+    else
+      firebase.child(`workouts/${currentId}`).set(obj, (err) => {
+        if (err) console.log(err);
+        else setCurrentId("");
+      });
+  };
+
+  const onDelete = (id) => {
+    if (window.confirm("Are you sure you want to delete this workout?")) {
+      firebase.child(`workouts/${id}`).remove((err) => {
+        if (err) console.log(err);
+        else setCurrentId("");
+      });
+    }
   };
 
   return (
@@ -31,7 +48,11 @@ const WorkoutList = () => {
       </div>
       <div className="row">
         <div className="col-md-5">
-          <WorkoutForm addOrEdit={addOrEdit}></WorkoutForm>
+          <WorkoutForm
+            addOrEdit={addOrEdit}
+            currentId={currentId}
+            workouts={workouts}
+          ></WorkoutForm>
         </div>
         <div className="col-md-7">
           <table className="table">
@@ -44,14 +65,33 @@ const WorkoutList = () => {
               </tr>
             </thead>
             <tbody>
-              {Object.keys(workouts).map((id) => (
-                <Workout
-                  key={id}
-                  workoutDuration={workouts[id].workoutDuration}
-                  workoutType={workouts[id].workoutType}
-                  exercises={workouts[id].Exercises}
-                ></Workout>
-              ))}
+              {Object.keys(workouts).map((id) => {
+                return (
+                  <tr key={id}>
+                    <td>{workouts[id].workoutDuration}</td>
+                    <td>{workouts[id].workoutType}</td>
+                    <td>{workouts[id].Exercises}</td>
+                    <td>
+                      <a
+                        className="btn text-primary"
+                        onClick={() => {
+                          setCurrentId(id);
+                        }}
+                      >
+                        <i className="fas fa-pencil-alt"></i>
+                      </a>
+                      <a
+                        className="btn text-danger"
+                        onClick={() => {
+                          onDelete(id);
+                        }}
+                      >
+                        <i className="fas fa-trash-alt"></i>
+                      </a>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -9,6 +9,21 @@ const WorkoutForm = (props) => {
 
   var [values, setValues] = useState(initialFieldValues);
 
+  useEffect(() => {
+    console.log("------" + props.currentId);
+    if (props.currentId == "") {
+      setValues({
+        ...initialFieldValues,
+      });
+      console.log("Here1");
+    } else {
+      setValues({
+        ...props.workouts[props.currentId],
+      });
+      console.log("Here2");
+    }
+  }, [props.currentId, props.workouts]); //se apeleaza cand se schimba stateul celor 2
+
   const handleInputChange = (e) => {
     var { name, value } = e.target;
     setValues({
@@ -76,7 +91,7 @@ const WorkoutForm = (props) => {
         <div className="form-group">
           <input
             type="submit"
-            value="Save"
+            value={props.currentId == "" ? "Save" : "Update"}
             className="btn btn-primary btn-block"
           ></input>
         </div>
